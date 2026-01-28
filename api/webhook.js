@@ -7,10 +7,10 @@ app.post('/', (req, res) => {
         const queryResult = req.body.queryResult || {};
         const parameters = queryResult.parameters || {};
 
-        // 💡 抓取你 Dialogflow 設定的參數名稱
+        // 取得參數：對齊你 Dialogflow 設定的 number, number1, operator
         const num1 = parseFloat(parameters['number']);
         const num2 = parseFloat(parameters['number1']);
-        const operator = parameters['operator'] || '';
+        const operator = parameters['operator']; 
 
         // 檢查數字是否有效
         if (isNaN(num1) || isNaN(num2)) {
@@ -20,29 +20,46 @@ app.post('/', (req, res) => {
         let result = 0;
         let message = '';
 
-        // 運算邏輯 (支援加減乘除)
+        // 運算邏輯判斷
         switch (operator) {
-            case '加': case '+': result = num1 + num2; break;
-            case '減': case '-': result = num1 - num2; break;
-            case '乘': case '*': case 'x': result = num1 * num2; break;
-            case '除': case '/':
-                if (num2 === 0) { message = '數學老師說不能除以 0 喔！'; } 
-                else { result = num1 / num2; }
+            case '加':
+            case '+':
+                result = num1 + num2;
+                break;
+            case '減':
+            case '-':
+                result = num1 - num2;
+                break;
+            case '乘':
+            case '*':
+            case 'x':
+                result = num1 * num2;
+                break;
+            case '除':
+            case '/':
+                if (num2 === 0) {
+                    message = '數學老師說不能除以 0 喔！';
+                } else {
+                    result = num1 / num2;
+                }
                 break;
             default:
-                result = num1 + num2; // 預設做加法
-                message = `我猜你想做加法，結果是：${result}`;
+                // 如果抓不到 operator，預設做加法，或提示使用者
+                result = num1 + num2;
+                message = `我不確定運算符號，預設幫你加起來：${result}`;
         }
 
-        if (!message) { message = `計算結果是：${result}`; }
+        if (!message) {
+            message = `計算結果是：${result}`;
+        }
 
         res.json({ fulfillmentText: message });
 
     } catch (error) {
         console.error("Error:", error);
-        res.status(500).json({ fulfillmentText: '處理過程中出錯。' });
+        res.json({ fulfillmentText: '處理過程中後端出錯了。' });
     }
 });
 
-// 重要：在 Vercel 只需要導出 app，不能寫 app.listen
+// 重要：在 Vercel 環境中，只需要導出 app，絕對不要寫 app.listen(...)
 module.exports = app;
