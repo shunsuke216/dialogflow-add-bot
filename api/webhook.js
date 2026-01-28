@@ -2,19 +2,27 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
+// 錯誤處理
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ fulfillmentText: '伺服器出錯了，請檢查後台設定。' });
+});
+
 app.post('/', (req, res) => {
     try {
-        const queryResult = req.body.queryResult || {};
-        const parameters = queryResult.parameters || {};
+        const { parameters } = req.body.queryResult || {};
+        if (!parameters) {
+            return res.json({ fulfillmentText: '缺少參數，請確認 Dialogflow 設定。' });
+        }
 
-        // 取得參數：對齊你 Dialogflow 設定的 number, number1, operator
-        const num1 = parseFloat(parameters['number']);
-        const num2 = parseFloat(parameters['number1']);
-        const operator = parameters['operator']; 
+        // 對齊你的截圖：number 為第一個數，number1 為第二個數
+        const num1 = parseFloat(parameters['number']); [cite: 2]
+        const num2 = parseFloat(parameters['number1']); [cite: 2]
+        const operator = parameters['operator'] || ''; [cite: 2]
 
         // 檢查數字是否有效
-        if (isNaN(num1) || isNaN(num2)) {
-            return res.json({ fulfillmentText: '收到的數字不完全（例如：5加3）。' });
+        if (isNaN(num1) || isNaN(num2)) { [cite: 3]
+            return res.json({ fulfillmentText: '請輸入有效的數字再運算。' }); [cite: 3]
         }
 
         let result = 0;
@@ -24,7 +32,7 @@ app.post('/', (req, res) => {
         switch (operator) {
             case '加':
             case '+':
-                result = num1 + num2;
+                result = num1 + num2; [cite: 4]
                 break;
             case '減':
             case '-':
@@ -33,33 +41,30 @@ app.post('/', (req, res) => {
             case '乘':
             case '*':
             case 'x':
-                result = num1 * num2;
+            case 'X':
+                result = num1 * num2; [cite: 5]
                 break;
             case '除':
             case '/':
-                if (num2 === 0) {
-                    message = '數學老師說不能除以 0 喔！';
-                } else {
-                    result = num1 / num2;
-                }
+                if (num2 === 0) { [cite: 6]
+                    message = '數學老師說不能除以 0 喔！'; [cite: 6]
+                } else { [cite: 7]
+                    result = num1 / num2; [cite: 7]
+                } [cite: 8]
                 break;
-            default:
-                // 如果抓不到 operator，預設做加法，或提示使用者
-                result = num1 + num2;
-                message = `我不確定運算符號，預設幫你加起來：${result}`;
-        }
+            default: [cite: 9]
+                message = '我不確定你想做什麼運算，請試試看『5 乘以 8』'; [cite: 9]
+        } [cite: 10]
 
         if (!message) {
-            message = `計算結果是：${result}`;
+            message = `計算結果是：${result}`; [cite: 11]
         }
 
         res.json({ fulfillmentText: message });
-
-    } catch (error) {
-        console.error("Error:", error);
-        res.json({ fulfillmentText: '處理過程中後端出錯了。' });
+    } catch (error) { [cite: 12]
+        res.json({ fulfillmentText: '後端執行出錯了，請查看日誌。' }); [cite: 12]
     }
 });
 
-// 重要：在 Vercel 環境中，只需要導出 app，絕對不要寫 app.listen(...)
-module.exports = app;
+// 重要：移除 app.listen，只保留導出
+module.exports = app; [cite: 14]
